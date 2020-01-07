@@ -1,16 +1,25 @@
+
 $(document).ready(function () {
-  $('[data-toggle="popover"]').popover();
   $("#conta").hide();
 });
 
-$("#popoverUpload").popover({ trigger: "hover focus" });
 
-window.ondragover = function (e) { e.preventDefault(); };
+function handleFileSelect(evt) {
+  evt.stopPropagation();
+  evt.preventDefault();
+  var file = evt.dataTransfer.files[0];
+  console.log(file);
+  compress(file);
+}
 
-window.ondrop = function (e) {
-  e.preventDefault();
-  compress(e);
-};
+function handleDragOver(evt) {
+  evt.stopPropagation();
+  evt.preventDefault();
+  evt.dataTransfer.dropEffect = 'copy';
+}
+
+window.addEventListener('dragover', handleDragOver, false);
+window.addEventListener('drop', handleFileSelect, false);
 
 window.onresize = () => {
   if (canvas) {
@@ -21,13 +30,12 @@ window.onresize = () => {
 $("#uploadedFile").change((e) => {
   console.log("uploaded");
   console.log(e.target.files[0]);
-  compress(e);
+  compress(e.target.files[0]);
 });
 
-function compress(e) {
-  const fileName = e.target.files[0].name;
+function compress(file) {
   const reader = new FileReader();
-  reader.readAsDataURL(e.target.files[0]);
+  reader.readAsDataURL(file);
   reader.onload = event => {
     const img = new Image();
     img.src = event.target.result;
@@ -53,7 +61,6 @@ function compress(e) {
   };
 }
 
-
 var PUZZLEDIFFICULTY = $("#dificulty").val();
 $("#dificulty").change((e) => {
   PUZZLEDIFFICULTY = parseInt(e.target.value);
@@ -64,10 +71,10 @@ $("#dificulty").on("click", ((e) => {
   onImage();
 }));
 
-const PUZZLEHOVERTINT = '#a6c';
+const PUZZLEHOVERTINT = '#ffffff';
 var scale;
 var canvas;
-var stage;
+var ctx;
 var img;
 var pieces;
 var puzzleWidth;
@@ -102,7 +109,7 @@ function initPuzzle() {
   mouse = { x: 0, y: 0 };
   currentPiece = null;
   currentDropPiece = null;
-  stage.drawImage(img, 0, 0, puzzleWidth, puzzleHeight, 0, 0, puzzleWidth, puzzleHeight);
+  ctx.drawImage(img, 0, 0, puzzleWidth, puzzleHeight, 0, 0, puzzleWidth, puzzleHeight);
   buildPieces();
 }
 
@@ -128,7 +135,7 @@ function buildPieces() {
 
 function shufflePuzzle() {
   pieces = shuffleArray(pieces);
-  stage.clearRect(0, 0, puzzleWidth, puzzleHeight);
+  ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
   var i;
   var piece;
   var xPos = 0;
@@ -137,8 +144,8 @@ function shufflePuzzle() {
     piece = pieces[i];
     piece.xPos = xPos;
     piece.yPos = yPos;
-    stage.drawImage(img, piece.sx, piece.sy, pieceWidth, pieceHeight, xPos, yPos, pieceWidth, pieceHeight);
-    stage.strokeRect(xPos, yPos, pieceWidth, pieceHeight);
+    ctx.drawImage(img, piece.sx, piece.sy, pieceWidth, pieceHeight, xPos, yPos, pieceWidth, pieceHeight);
+    ctx.strokeRect(xPos, yPos, pieceWidth, pieceHeight);
     xPos += pieceWidth;
     if (xPos >= puzzleWidth) {
       xPos = 0;
@@ -165,12 +172,12 @@ function onPuzzleClick(e) {
   }
   currentPiece = checkPieceClicked();
   if (currentPiece != null) {
-    new Audio('hold.wav').play();
-    stage.clearRect(currentPiece.xPos, currentPiece.yPos, pieceWidth, pieceHeight);
-    stage.save();
-    stage.globalAlpha = .9;
-    stage.drawImage(img, currentPiece.sx, currentPiece.sy, pieceWidth, pieceHeight, mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
-    stage.restore();
+    new Audio('./media/hold.wav').play();
+    ctx.clearRect(currentPiece.xPos, currentPiece.yPos, pieceWidth, pieceHeight);
+    ctx.save();
+    ctx.globalAlpha = .9;
+    ctx.drawImage(img, currentPiece.sx, currentPiece.sy, pieceWidth, pieceHeight, mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
+    ctx.restore();
     document.onmousemove = updatePuzzle;
     document.onmouseup = pieceDropped;
   }
@@ -182,7 +189,6 @@ function checkPieceClicked() {
   for (i = 0; i < pieces.length; i++) {
     piece = pieces[i];
     if (mouse.x < piece.xPos || mouse.x > (piece.xPos + pieceWidth) || mouse.y < piece.yPos || mouse.y > (piece.yPos + pieceHeight)) {
-      //PIECE NOT HIT
     }
     else {
       return piece;
@@ -201,7 +207,7 @@ function updatePuzzle(e) {
     mouse.x = e.offsetX - canvas.offsetLeft;
     mouse.y = e.offsetY - canvas.offsetTop;
   }
-  stage.clearRect(0, 0, puzzleWidth, puzzleHeight);
+  ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
   var i;
   var piece;
   for (i = 0; i < pieces.length; i++) {
@@ -209,27 +215,26 @@ function updatePuzzle(e) {
     if (piece == currentPiece) {
       continue;
     }
-    stage.drawImage(img, piece.sx, piece.sy, pieceWidth, pieceHeight, piece.xPos, piece.yPos, pieceWidth, pieceHeight);
-    stage.strokeRect(piece.xPos, piece.yPos, pieceWidth, pieceHeight);
+    ctx.drawImage(img, piece.sx, piece.sy, pieceWidth, pieceHeight, piece.xPos, piece.yPos, pieceWidth, pieceHeight);
+    ctx.strokeRect(piece.xPos, piece.yPos, pieceWidth, pieceHeight);
     if (currentDropPiece == null) {
       if (mouse.x < piece.xPos || mouse.x > (piece.xPos + pieceWidth) || mouse.y < piece.yPos || mouse.y > (piece.yPos + pieceHeight)) {
-        //NOT OVER
       }
       else {
         currentDropPiece = piece;
-        stage.save();
-        stage.globalAlpha = .4;
-        stage.fillStyle = PUZZLEHOVERTINT;
-        stage.fillRect(currentDropPiece.xPos, currentDropPiece.yPos, pieceWidth, pieceHeight);
-        stage.restore();
+        ctx.save();
+        ctx.globalAlpha = .4;
+        ctx.fillStyle = PUZZLEHOVERTINT;
+        ctx.fillRect(currentDropPiece.xPos, currentDropPiece.yPos, pieceWidth, pieceHeight);
+        ctx.restore();
       }
     }
   }
-  stage.save();
-  stage.globalAlpha = .6;
-  stage.drawImage(img, currentPiece.sx, currentPiece.sy, pieceWidth, pieceHeight, mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
-  stage.restore();
-  stage.strokeRect(mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
+  ctx.save();
+  ctx.globalAlpha = .6;
+  ctx.drawImage(img, currentPiece.sx, currentPiece.sy, pieceWidth, pieceHeight, mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
+  ctx.restore();
+  ctx.strokeRect(mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
 }
 
 function pieceDropped(e) {
@@ -242,7 +247,7 @@ function pieceDropped(e) {
     currentDropPiece.xPos = tmp.xPos;
     currentDropPiece.yPos = tmp.yPos;
   }
-  new Audio('release.wav').play();
+  new Audio('./media/release.wav').play();
   resetPuzzleAndCheckWin();
 }
 
@@ -251,25 +256,25 @@ function animate({ timing, draw, duration }) {
   let start = performance.now();
 
   requestAnimationFrame(function animate(time) {
-    // timeFraction goes from 0 to 1
     let timeFraction = (time - start) / duration;
     if (timeFraction > 1) timeFraction = 1;
 
-    // calculate the current animation state
     let progress = timing(timeFraction);
 
-    draw(progress); // draw it
+    draw(progress);
 
     if (timeFraction < 1) {
       requestAnimationFrame(animate);
     } else {
       resetPuzzleAndCheckWin();
+      $("#randomize").on("click",shufflePuzzle);
     }
   });
 }
 
 function solve() {
   $("#solve").unbind("click");
+  $("#randomize").unbind("click");
   for (var i = 1; i < pieces.length; i++) {
     var tmp = pieces[i];
     for (var j = i - 1; j >= 0 && (pieces[j].i > tmp.i); j--) {
@@ -287,22 +292,22 @@ function solve() {
         piece = pieces[k];
         piece.xPos = piece.xPos + (piece.sx - piece.xPos) * progress;
         piece.yPos = piece.yPos + (piece.sy - piece.yPos) * progress;
-        stage.drawImage(img, piece.sx, piece.sy, pieceWidth, pieceHeight, piece.xPos, piece.yPos, pieceWidth, pieceHeight);
-        stage.strokeRect(piece.xPos, piece.yPos, pieceWidth, pieceHeight);
+        ctx.drawImage(img, piece.sx, piece.sy, pieceWidth, pieceHeight, piece.xPos, piece.yPos, pieceWidth, pieceHeight);
+        ctx.strokeRect(piece.xPos, piece.yPos, pieceWidth, pieceHeight);
       }
     }
   });
 }
 
 function resetPuzzleAndCheckWin() {
-  stage.clearRect(0, 0, puzzleWidth, puzzleHeight);
+  ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
   var gameWin = true;
   var i;
   var piece;
   for (i = 0; i < pieces.length; i++) {
     piece = pieces[i];
-    stage.drawImage(img, piece.sx, piece.sy, pieceWidth, pieceHeight, piece.xPos, piece.yPos, pieceWidth, pieceHeight);
-    stage.strokeRect(piece.xPos, piece.yPos, pieceWidth, pieceHeight);
+    ctx.drawImage(img, piece.sx, piece.sy, pieceWidth, pieceHeight, piece.xPos, piece.yPos, pieceWidth, pieceHeight);
+    ctx.strokeRect(piece.xPos, piece.yPos, pieceWidth, pieceHeight);
     if (piece.xPos != piece.sx || piece.yPos != piece.sy) {
       gameWin = false;
     }
@@ -313,7 +318,7 @@ function resetPuzzleAndCheckWin() {
 }
 
 function gameOver() {
-  new Audio('done.mp3').play();
+  new Audio('./media/done.mp3').play();
   document.onmousedown = null;
   document.onmousemove = null;
   document.onmouseup = null;
@@ -322,12 +327,12 @@ function gameOver() {
 
 function setCanvas() {
   canvas = document.getElementById('canvas');
-  stage = canvas.getContext('2d');
+  ctx = canvas.getContext('2d');
   canvas.width = puzzleWidth;
   canvas.height = puzzleHeight;
   canvas.style.border = "1px solid black";
-  roundRect(stage, 0, 0, canvas.width, canvas.height, 5);
-  stage.drawImage(img, 0, 0, img.width * scale, img.height * scale);
+  roundRect(ctx, 0, 0, canvas.width, canvas.height, 5);
+  ctx.drawImage(img, 0, 0, img.width * scale, img.height * scale);
 
 }
 
