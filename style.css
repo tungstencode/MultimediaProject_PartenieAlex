@@ -12,6 +12,7 @@ input[type="file"] {
 }
 
 #conta{
+  margin-bottom: 5vh;
   width: 65vw;
   height: 80vh;
 }
@@ -89,18 +90,11 @@ input[type="file"] {
 
 #footer {
   background: #353535;
-  padding: 30px 0;
+  padding: 15px 0;
   color: #fff;
   font-size: 14px;
 }
 
 #footer .copyright {
   text-align: center;
-}
-
-#footer .credits {
-  padding-top: 10px;
-  text-align: center;
-  font-size: 13px;
-  color: #fff;
 }

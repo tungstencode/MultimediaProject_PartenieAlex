@@ -5,11 +5,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Proiect_Multimedia_Tema_5_Puzzle</title>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+  <title>ProiectMultimediaTema5Puzzle</title>
+  <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
     integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-  <link href="./fontawesome.css" rel="stylesheet">
+  <link href="./fontawesome.css" rel="stylesheet"> -->
   <script defer src="./fontawesome.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css">
+  <!-- Bootstrap core CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Material Design Bootstrap -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.10.1/css/mdb.min.css" rel="stylesheet">
+
   <link rel="stylesheet" href="./style.css">
 </head>
 
@@ -17,8 +25,6 @@
 
   <section id="hero">
     <div class="hero-container">
-
-
       <a id="uploadButton" data-trigger="hover" href="#" data-toggle="popover" data-placement="top"
         title="Upload a photo" data-content="Click on the arrow to upload a photo and start the puzzle">
         <label>
@@ -28,17 +34,26 @@
       </a>
 
       <div id="conta" class="container">
-        <canvas id="canvas"></canvas>
+        <div class="row justify-content-center">
+          <canvas id="canvas"></canvas>
+        </div>
+        <div class="row justify-content-center">
+          <div class="col=sm-3">
+            <button id="randomize" class="btn btn-secondary">Randomize</button>
+          </div>
+          <div class="col=sm-3">
+            <button id="solve" class="btn btn-secondary">Solve</button>
+          </div>
+          <div class="col-sm-3">
+            <label for="dificulty">Dificulty</label>
+            <input type="range" class="custom-range" value="4" min="2" max="6" id="dificulty">
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
   <footer id="footer">
-    <div class="footer-top">
-      <div class="container">
-
-      </div>
-    </div>
     <div class="container">
       <div class="copyright">
         &copy; Copyright <strong>Partenie Alex-Eduard</strong>. All Rights Reserved
@@ -46,146 +61,18 @@
     </div>
   </footer>
 
-
-
-  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
-    integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
-    crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
-    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
-    crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
-    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
-    crossorigin="anonymous"></script>
-
-  <script>
-    $(document).ready(function () {
-      $('[data-toggle="popover"]').popover();
-      $("#conta").hide();
-    });
-
-    $("#popoverUpload").popover({ trigger: "hover focus" });
-
-    window.ondragover = function (e) { e.preventDefault() }
-    window.ondrop = function (e) {
-      e.preventDefault();
-      var img = new Image();
-      var reader = new FileReader();
-      reader.readAsDataURL(e.dataTransfer.files[0]);
-      reader.onload = function (evt) {
-        if (evt.target.readyState == FileReader.DONE) {
-          img.src = evt.target.result;
-          drawCanvas(img);
-          console.log(img);
-          console.log("done");
-        }
-      }
-
-    }
-
-    $("#uploadedFile").change((e) => {
-      console.log("uploaded");
-      console.log(e.target.files[0]);
-      var img = new Image();
-
-      var reader = new FileReader();
-      reader.readAsDataURL(e.target.files[0]);
-      reader.onload = function (evt) {
-        if (evt.target.readyState == FileReader.DONE) {
-          img.src = evt.target.result;
-          drawCanvas(img);
-          console.log(img);
-          console.log("done");
-        }
-      }
-    })
-
-    function drawCanvas(img) {
-      $("#conta").show();
-      $("#uploadButton").hide();
-
-      try {
-        var conta = document.getElementById('conta');
-        var canvas = document.getElementById("canvas");
-
-        console.log(conta.clientWidth);
-
-        function roundRect(x, y, w, h, radius) {
-          var r = x + w;
-          var b = y + h;
-          ctx.beginPath();
-          ctx.fillStyle = "white";
-          ctx.moveTo(x + radius, y);
-          ctx.lineTo(r - radius, y);
-          ctx.quadraticCurveTo(r, y, r, y + radius);
-          ctx.lineTo(r, y + h - radius);
-          ctx.quadraticCurveTo(r, b, r - radius, b);
-          ctx.lineTo(x + radius, b);
-          ctx.quadraticCurveTo(x, b, x, b - radius);
-          ctx.lineTo(x, y + radius);
-          ctx.quadraticCurveTo(x, y, x + radius, y);
-          ctx.fill();
-        }
-
-        // function draw(options) {
-        //   ctx.clearRect(0, 0, canvas.width, canvas.height);
-        //   if (options.cardType == "full") {
-        //     ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-        //   }
-        //   if (options.cardType == "half") {
-        //     ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-        //     ctx.clearRect(x, y + img.height / 1.9 * scale, img.width * scale, 999999);
-        //   }
-        //   if (options.cardWindow == "yes") {
-        //     roundRect(
-        //       x + img.width / 17 * scale,
-        //       y + img.height / 1.9 * scale,
-        //       img.width * scale - img.width / 17 * scale * 2,
-        //       img.height / 2.8 * scale,
-        //       5
-        //     );
-        //   }
-        //   if (options.cardChip == "bigChip") {
-        //     roundRect(
-        //       x + img.width / 10 * scale,
-        //       y + img.height / 4.6 * scale + img.width / 15 * scale,
-        //       img.width * scale - img.width / 1.21 * scale,
-        //       img.height / 4.6 * scale,
-        //       5
-        //     );
-        //   }
-        //   if (options.cardChip == "smallChip") {
-        //     roundRect(
-        //       x + img.width / 9 * scale,
-        //       y + img.height / 4.5 * scale + img.width / 15 * scale,
-        //       img.width * scale - img.width / 1.15 * scale,
-        //       img.height / 6.7 * scale,
-        //       5
-        //     );
-        //   }
-        // }
-
-
-        canvas.height = conta.clientHeight;
-        canvas.width = conta.clientWidth;
-
-        var ctx = canvas.getContext("2d");
-        var scale = Math.min(canvas.width / img.width, canvas.height / img.height);
-        // get the top left position of the image
-        var x = (canvas.width / 2) - (img.width / 2) * scale;
-        var y = (canvas.height / 2) - (img.height / 2) * scale;
-        // ctx.Rect(0, 0, canvas.width, canvas.height);
-        // draw(options);
-        roundRect(0, 0, canvas.width, canvas.height, 5);
-        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-
-      } catch (error) {
-        console.warn(error)
-      }
-    }
-
-
-  </script>
+  <!-- JQuery -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <!-- Bootstrap tooltips -->
+  <script type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.4/umd/popper.min.js"></script>
+  <!-- Bootstrap core JavaScript -->
+  <script type="text/javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  <!-- MDB core JavaScript -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.10.1/js/mdb.min.js"></script>
+  <!-- Where everything is -->
+  <script type="text/javascript" src="./main.js"></script>
 </body>
 
 </html>
