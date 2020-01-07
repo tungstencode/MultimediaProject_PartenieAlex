@@ -152,7 +152,7 @@ function shufflePuzzle() {
     piece.curX = curX;
     piece.curY = curY;
     ctx.drawImage(img, piece.solX, piece.solY, pieceWidth, pieceHeight, curX, curY, pieceWidth, pieceHeight);
-    ctx.strokeRect(curX, curY, pieceWidth, pieceHeight);
+    // ctx.strokeRect(curX, curY, pieceWidth, pieceHeight);
     curX += pieceWidth;
     if (curX >= puzzleWidth) {
       curX = 0;
@@ -235,7 +235,7 @@ function updatePuzzle(e) {
       continue;
     }
     ctx.drawImage(img, piece.solX, piece.solY, pieceWidth, pieceHeight, piece.curX, piece.curY, pieceWidth, pieceHeight);
-    ctx.strokeRect(piece.curX, piece.curY, pieceWidth, pieceHeight);
+    // ctx.strokeRect(piece.curX, piece.curY, pieceWidth, pieceHeight);
     if (currentDropPiece == null) {
       if (mouse.x < piece.curX || mouse.x > (piece.curX + pieceWidth) || mouse.y < piece.curY || mouse.y > (piece.curY + pieceHeight)) {
       }
@@ -253,7 +253,7 @@ function updatePuzzle(e) {
   ctx.globalAlpha = .6;
   ctx.drawImage(img, currentPiece.solX, currentPiece.solY, pieceWidth, pieceHeight, mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
   ctx.restore();
-  ctx.strokeRect(mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
+  // ctx.strokeRect(mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
 }
 
 function pieceDropped() {
@@ -313,7 +313,7 @@ function solve() {
         piece.curX = piece.curX + (piece.solX - piece.curX) * progress;
         piece.curY = piece.curY + (piece.solY - piece.curY) * progress;
         ctx.drawImage(img, piece.solX, piece.solY, pieceWidth, pieceHeight, piece.curX, piece.curY, pieceWidth, pieceHeight);
-        ctx.strokeRect(piece.curX, piece.curY, pieceWidth, pieceHeight);
+        // ctx.strokeRect(piece.curX, piece.curY, pieceWidth, pieceHeight);
       }
     }
   });
@@ -327,7 +327,7 @@ function checkAndReset() {
   for (i = 0; i < pieces.length; i++) {
     piece = pieces[i];
     ctx.drawImage(img, piece.solX, piece.solY, pieceWidth, pieceHeight, piece.curX, piece.curY, pieceWidth, pieceHeight);
-    ctx.strokeRect(piece.curX, piece.curY, pieceWidth, pieceHeight);
+    // ctx.strokeRect(piece.curX, piece.curY, pieceWidth, pieceHeight);
     if (piece.curX != piece.solX || piece.curY != piece.solY) {
       win = false;
     }
@@ -338,7 +338,7 @@ function checkAndReset() {
 }
 
 function gameOver() {
-  new Audio('./media/done.mp3').play();
+  new Audio('./media/done.flac').play();
   document.onmousedown = null;
   document.onmousemove = null;
   document.onmouseup = null;
