@@ -6,42 +6,52 @@ $(document).ready(function () {
 $("#popoverUpload").popover({ trigger: "hover focus" });
 
 window.ondragover = function (e) { e.preventDefault(); };
+
 window.ondrop = function (e) {
   e.preventDefault();
-  var img = new Image();
-  var reader = new FileReader();
-  reader.readAsDataURL(e.dataTransfer.files[0]);
-  reader.onload = function (evt) {
-    if (evt.target.readyState == FileReader.DONE) {
-      img.src = evt.target.result;
-      init(img);
-      console.log(img);
-      console.log("done");
-    }
-  };
+  compress(e);
 };
+
 window.onresize = () => {
   if (canvas) {
-    onImage();
+    init(img);
   }
 };
 
 $("#uploadedFile").change((e) => {
   console.log("uploaded");
   console.log(e.target.files[0]);
-  var img = new Image();
-
-  var reader = new FileReader();
-  reader.readAsDataURL(e.target.files[0]);
-  reader.onload = function (evt) {
-    if (evt.target.readyState == FileReader.DONE) {
-      img.src = evt.target.result;
-      init(img);
-      console.log(img);
-      console.log("done");
-    }
-  };
+  compress(e);
 });
+
+function compress(e) {
+  const fileName = e.target.files[0].name;
+  const reader = new FileReader();
+  reader.readAsDataURL(e.target.files[0]);
+  reader.onload = event => {
+    const img = new Image();
+    img.src = event.target.result;
+    img.onload = () => {
+      const elem = document.createElement('canvas');
+
+      const height = window.innerHeight * 0.8;
+      const scaleFactor = height / img.height;
+
+      elem.height = height;
+      elem.width = img.width * scaleFactor;
+
+      const ctx = elem.getContext('2d');
+      ctx.drawImage(img, 0, 0, elem.width, elem.height);
+
+      const data = ctx.canvas.toDataURL(img, 'image/jpeg', 1);
+      var result = new Image();
+      result.src = data;
+
+      init(result);
+    },
+      reader.onerror = error => console.log(error);
+  };
+}
 
 
 var PUZZLEDIFFICULTY = $("#dificulty").val();
@@ -55,7 +65,7 @@ $("#dificulty").on("click", ((e) => {
 }));
 
 const PUZZLEHOVERTINT = '#a6c';
-var SCALE;
+var scale;
 var canvas;
 var stage;
 var img;
@@ -78,9 +88,9 @@ function onImage(e) {
   $("#conta").show();
   $("#uploadButton").hide();
   var conta = document.getElementById('conta');
-  SCALE = Math.min(conta.clientWidth / img.width, conta.clientHeight / img.height);
-  pieceWidth = Math.floor(img.width * SCALE / PUZZLEDIFFICULTY);
-  pieceHeight = Math.floor(img.height * SCALE / PUZZLEDIFFICULTY);
+  scale = Math.min(conta.clientWidth / img.width, conta.clientHeight / img.height);
+  pieceWidth = Math.floor(img.width / PUZZLEDIFFICULTY);
+  pieceHeight = Math.floor(img.height / PUZZLEDIFFICULTY);
   puzzleWidth = pieceWidth * PUZZLEDIFFICULTY;
   puzzleHeight = pieceHeight * PUZZLEDIFFICULTY;
   setCanvas();
@@ -266,7 +276,6 @@ function solve() {
       pieces[j + 1] = pieces[j];
     }
     pieces[j + 1] = tmp;
-
   }
   animate({
     duration: 1000,
@@ -283,9 +292,7 @@ function solve() {
       }
     }
   });
-
 }
-
 
 function resetPuzzleAndCheckWin() {
   stage.clearRect(0, 0, puzzleWidth, puzzleHeight);
@@ -304,6 +311,7 @@ function resetPuzzleAndCheckWin() {
     setTimeout(gameOver, 500);
   }
 }
+
 function gameOver() {
   new Audio('done.mp3').play();
   document.onmousedown = null;
@@ -311,6 +319,7 @@ function gameOver() {
   document.onmouseup = null;
   initPuzzle();
 }
+
 function setCanvas() {
   canvas = document.getElementById('canvas');
   stage = canvas.getContext('2d');
@@ -318,7 +327,7 @@ function setCanvas() {
   canvas.height = puzzleHeight;
   canvas.style.border = "1px solid black";
   roundRect(stage, 0, 0, canvas.width, canvas.height, 5);
-  stage.drawImage(img, 0, 0, img.width * SCALE, img.height * SCALE);
+  stage.drawImage(img, 0, 0, img.width * scale, img.height * scale);
 
 }
 
