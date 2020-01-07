@@ -307,6 +307,7 @@ function solve() {
       return timeFraction;
     },
     draw(progress) {
+      ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
       for (k = 0; k < pieces.length; k++) {
         piece = pieces[k];
         piece.curX = piece.curX + (piece.solX - piece.curX) * progress;
