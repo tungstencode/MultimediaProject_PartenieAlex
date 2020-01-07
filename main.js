@@ -333,7 +333,7 @@ function checkAndReset() {
     }
   }
   if (win) {
-    setTimeout(gameOver, 300);
+    setTimeout(gameOver, 500);
   }
 }
 
