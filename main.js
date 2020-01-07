@@ -7,7 +7,7 @@ $(document).ready(function () {
 function handleFileSelect(evt) {
   evt.stopPropagation();
   evt.preventDefault();
-  var file = evt.dataTransfer.files[0];
+  file = evt.dataTransfer.files[0];
   console.log(file);
   compress(file);
 }
@@ -21,16 +21,22 @@ function handleDragOver(evt) {
 window.addEventListener('dragover', handleDragOver, false);
 window.addEventListener('drop', handleFileSelect, false);
 
+var t = null;
+
 window.onresize = () => {
   if (canvas) {
-    init(img);
+    if (t != null) clearTimeout(t);
+    t = setTimeout(function () {
+      compress(file);
+    }, 20);
   }
 };
 
 $("#uploadedFile").change((e) => {
   console.log("uploaded");
   console.log(e.target.files[0]);
-  compress(e.target.files[0]);
+  file = e.target.files[0];
+  compress(file);
 });
 
 function compress(file) {
@@ -61,18 +67,19 @@ function compress(file) {
   };
 }
 
-var PUZZLEDIFFICULTY = $("#dificulty").val();
+var difficulty = $("#dificulty").val();
 $("#dificulty").change((e) => {
-  PUZZLEDIFFICULTY = parseInt(e.target.value);
+  difficulty = parseInt(e.target.value);
   onImage();
 });
 $("#dificulty").on("click", ((e) => {
-  PUZZLEDIFFICULTY = parseInt(e.target.value);
+  difficulty = parseInt(e.target.value);
   onImage();
 }));
 
-const PUZZLEHOVERTINT = '#ffffff';
+const hoverColor = '#ffffff';
 var scale;
+var file;
 var canvas;
 var ctx;
 var img;
@@ -96,10 +103,10 @@ function onImage(e) {
   $("#uploadButton").hide();
   var conta = document.getElementById('conta');
   scale = Math.min(conta.clientWidth / img.width, conta.clientHeight / img.height);
-  pieceWidth = Math.floor(img.width / PUZZLEDIFFICULTY);
-  pieceHeight = Math.floor(img.height / PUZZLEDIFFICULTY);
-  puzzleWidth = pieceWidth * PUZZLEDIFFICULTY;
-  puzzleHeight = pieceHeight * PUZZLEDIFFICULTY;
+  pieceWidth = Math.floor(img.width / difficulty);
+  pieceHeight = Math.floor(img.height / difficulty);
+  puzzleWidth = pieceWidth * difficulty;
+  puzzleHeight = pieceHeight * difficulty;
   setCanvas();
   initPuzzle();
 }
@@ -110,24 +117,24 @@ function initPuzzle() {
   currentPiece = null;
   currentDropPiece = null;
   ctx.drawImage(img, 0, 0, puzzleWidth, puzzleHeight, 0, 0, puzzleWidth, puzzleHeight);
-  buildPieces();
+  build();
 }
 
-function buildPieces() {
+function build() {
   var i;
   var piece;
-  var xPos = 0;
-  var yPos = 0;
-  for (i = 0; i < PUZZLEDIFFICULTY * PUZZLEDIFFICULTY; i++) {
+  var curX = 0;
+  var curY = 0;
+  for (i = 0; i < difficulty * difficulty; i++) {
     piece = {};
-    piece.i = i;
-    piece.sx = xPos;
-    piece.sy = yPos;
+    piece.index = i;
+    piece.solX = curX;
+    piece.solY = curY;
     pieces.push(piece);
-    xPos += pieceWidth;
-    if (xPos >= puzzleWidth) {
-      xPos = 0;
-      yPos += pieceHeight;
+    curX += pieceWidth;
+    if (curX >= puzzleWidth) {
+      curX = 0;
+      curY += pieceHeight;
     }
   }
   $("#randomize").on("click", shufflePuzzle);
@@ -138,30 +145,45 @@ function shufflePuzzle() {
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
   var i;
   var piece;
-  var xPos = 0;
-  var yPos = 0;
+  var curX = 0;
+  var curY = 0;
   for (i = 0; i < pieces.length; i++) {
     piece = pieces[i];
-    piece.xPos = xPos;
-    piece.yPos = yPos;
-    ctx.drawImage(img, piece.sx, piece.sy, pieceWidth, pieceHeight, xPos, yPos, pieceWidth, pieceHeight);
-    ctx.strokeRect(xPos, yPos, pieceWidth, pieceHeight);
-    xPos += pieceWidth;
-    if (xPos >= puzzleWidth) {
-      xPos = 0;
-      yPos += pieceHeight;
+    piece.curX = curX;
+    piece.curY = curY;
+    ctx.drawImage(img, piece.solX, piece.solY, pieceWidth, pieceHeight, curX, curY, pieceWidth, pieceHeight);
+    ctx.strokeRect(curX, curY, pieceWidth, pieceHeight);
+    curX += pieceWidth;
+    if (curX >= puzzleWidth) {
+      curX = 0;
+      curY += pieceHeight;
     }
   }
   $("#solve").unbind("click").on("click", solve);
   document.onmousedown = onPuzzleClick;
 }
-
-function shuffleArray(o) {
-  for (var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
-  return o;
+// Fisher-Yates shuffle algorithm
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  if (checkSorted(array)) {
+    shuffleArray(array);
+  }
+  return array;
 }
 
-function onPuzzleClick(e) {
+function checkSorted(o) {
+  for (var i = 0; i < o.length - 1; i++) {
+    if (o[i].index > o[i + 1].index) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function mouseUpdate(e) {
   if (e.layerX || e.layerX == 0) {
     mouse.x = e.layerX - canvas.offsetLeft;
     mouse.y = e.layerY - canvas.offsetTop;
@@ -170,13 +192,17 @@ function onPuzzleClick(e) {
     mouse.x = e.offsetX - canvas.offsetLeft;
     mouse.y = e.offsetY - canvas.offsetTop;
   }
+}
+
+function onPuzzleClick(e) {
+  mouseUpdate(e);
   currentPiece = checkPieceClicked();
   if (currentPiece != null) {
     new Audio('./media/hold.wav').play();
-    ctx.clearRect(currentPiece.xPos, currentPiece.yPos, pieceWidth, pieceHeight);
+    ctx.clearRect(currentPiece.curX, currentPiece.curY, pieceWidth, pieceHeight);
     ctx.save();
     ctx.globalAlpha = .9;
-    ctx.drawImage(img, currentPiece.sx, currentPiece.sy, pieceWidth, pieceHeight, mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
+    ctx.drawImage(img, currentPiece.solX, currentPiece.solY, pieceWidth, pieceHeight, mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
     ctx.restore();
     document.onmousemove = updatePuzzle;
     document.onmouseup = pieceDropped;
@@ -188,7 +214,7 @@ function checkPieceClicked() {
   var piece;
   for (i = 0; i < pieces.length; i++) {
     piece = pieces[i];
-    if (mouse.x < piece.xPos || mouse.x > (piece.xPos + pieceWidth) || mouse.y < piece.yPos || mouse.y > (piece.yPos + pieceHeight)) {
+    if (mouse.x < piece.curX || mouse.x > (piece.curX + pieceWidth) || mouse.y < piece.curY || mouse.y > (piece.curY + pieceHeight)) {
     }
     else {
       return piece;
@@ -199,14 +225,7 @@ function checkPieceClicked() {
 
 function updatePuzzle(e) {
   currentDropPiece = null;
-  if (e.layerX || e.layerX == 0) {
-    mouse.x = e.layerX - canvas.offsetLeft;
-    mouse.y = e.layerY - canvas.offsetTop;
-  }
-  else if (e.offsetX || e.offsetX == 0) {
-    mouse.x = e.offsetX - canvas.offsetLeft;
-    mouse.y = e.offsetY - canvas.offsetTop;
-  }
+  mouseUpdate(e);
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
   var i;
   var piece;
@@ -215,40 +234,40 @@ function updatePuzzle(e) {
     if (piece == currentPiece) {
       continue;
     }
-    ctx.drawImage(img, piece.sx, piece.sy, pieceWidth, pieceHeight, piece.xPos, piece.yPos, pieceWidth, pieceHeight);
-    ctx.strokeRect(piece.xPos, piece.yPos, pieceWidth, pieceHeight);
+    ctx.drawImage(img, piece.solX, piece.solY, pieceWidth, pieceHeight, piece.curX, piece.curY, pieceWidth, pieceHeight);
+    ctx.strokeRect(piece.curX, piece.curY, pieceWidth, pieceHeight);
     if (currentDropPiece == null) {
-      if (mouse.x < piece.xPos || mouse.x > (piece.xPos + pieceWidth) || mouse.y < piece.yPos || mouse.y > (piece.yPos + pieceHeight)) {
+      if (mouse.x < piece.curX || mouse.x > (piece.curX + pieceWidth) || mouse.y < piece.curY || mouse.y > (piece.curY + pieceHeight)) {
       }
       else {
         currentDropPiece = piece;
         ctx.save();
         ctx.globalAlpha = .4;
-        ctx.fillStyle = PUZZLEHOVERTINT;
-        ctx.fillRect(currentDropPiece.xPos, currentDropPiece.yPos, pieceWidth, pieceHeight);
+        ctx.fillStyle = hoverColor;
+        ctx.fillRect(currentDropPiece.curX, currentDropPiece.curY, pieceWidth, pieceHeight);
         ctx.restore();
       }
     }
   }
   ctx.save();
   ctx.globalAlpha = .6;
-  ctx.drawImage(img, currentPiece.sx, currentPiece.sy, pieceWidth, pieceHeight, mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
+  ctx.drawImage(img, currentPiece.solX, currentPiece.solY, pieceWidth, pieceHeight, mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
   ctx.restore();
   ctx.strokeRect(mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
 }
 
-function pieceDropped(e) {
+function pieceDropped() {
   document.onmousemove = null;
   document.onmouseup = null;
   if (currentDropPiece != null) {
-    var tmp = { xPos: currentPiece.xPos, yPos: currentPiece.yPos };
-    currentPiece.xPos = currentDropPiece.xPos;
-    currentPiece.yPos = currentDropPiece.yPos;
-    currentDropPiece.xPos = tmp.xPos;
-    currentDropPiece.yPos = tmp.yPos;
+    var tmp = { curX: currentPiece.curX, curY: currentPiece.curY };
+    currentPiece.curX = currentDropPiece.curX;
+    currentPiece.curY = currentDropPiece.curY;
+    currentDropPiece.curX = tmp.curX;
+    currentDropPiece.curY = tmp.curY;
   }
   new Audio('./media/release.wav').play();
-  resetPuzzleAndCheckWin();
+  checkAndReset();
 }
 
 function animate({ timing, draw, duration }) {
@@ -266,8 +285,8 @@ function animate({ timing, draw, duration }) {
     if (timeFraction < 1) {
       requestAnimationFrame(animate);
     } else {
-      resetPuzzleAndCheckWin();
-      $("#randomize").on("click",shufflePuzzle);
+      checkAndReset();
+      $("#randomize").on("click", shufflePuzzle);
     }
   });
 }
@@ -277,7 +296,7 @@ function solve() {
   $("#randomize").unbind("click");
   for (var i = 1; i < pieces.length; i++) {
     var tmp = pieces[i];
-    for (var j = i - 1; j >= 0 && (pieces[j].i > tmp.i); j--) {
+    for (var j = i - 1; j >= 0 && (pieces[j].index > tmp.index); j--) {
       pieces[j + 1] = pieces[j];
     }
     pieces[j + 1] = tmp;
@@ -290,30 +309,30 @@ function solve() {
     draw(progress) {
       for (k = 0; k < pieces.length; k++) {
         piece = pieces[k];
-        piece.xPos = piece.xPos + (piece.sx - piece.xPos) * progress;
-        piece.yPos = piece.yPos + (piece.sy - piece.yPos) * progress;
-        ctx.drawImage(img, piece.sx, piece.sy, pieceWidth, pieceHeight, piece.xPos, piece.yPos, pieceWidth, pieceHeight);
-        ctx.strokeRect(piece.xPos, piece.yPos, pieceWidth, pieceHeight);
+        piece.curX = piece.curX + (piece.solX - piece.curX) * progress;
+        piece.curY = piece.curY + (piece.solY - piece.curY) * progress;
+        ctx.drawImage(img, piece.solX, piece.solY, pieceWidth, pieceHeight, piece.curX, piece.curY, pieceWidth, pieceHeight);
+        ctx.strokeRect(piece.curX, piece.curY, pieceWidth, pieceHeight);
       }
     }
   });
 }
 
-function resetPuzzleAndCheckWin() {
+function checkAndReset() {
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
-  var gameWin = true;
+  var win = true;
   var i;
   var piece;
   for (i = 0; i < pieces.length; i++) {
     piece = pieces[i];
-    ctx.drawImage(img, piece.sx, piece.sy, pieceWidth, pieceHeight, piece.xPos, piece.yPos, pieceWidth, pieceHeight);
-    ctx.strokeRect(piece.xPos, piece.yPos, pieceWidth, pieceHeight);
-    if (piece.xPos != piece.sx || piece.yPos != piece.sy) {
-      gameWin = false;
+    ctx.drawImage(img, piece.solX, piece.solY, pieceWidth, pieceHeight, piece.curX, piece.curY, pieceWidth, pieceHeight);
+    ctx.strokeRect(piece.curX, piece.curY, pieceWidth, pieceHeight);
+    if (piece.curX != piece.solX || piece.curY != piece.solY) {
+      win = false;
     }
   }
-  if (gameWin) {
-    setTimeout(gameOver, 500);
+  if (win) {
+    setTimeout(gameOver, 300);
   }
 }
 
@@ -325,30 +344,15 @@ function gameOver() {
   initPuzzle();
 }
 
+
 function setCanvas() {
   canvas = document.getElementById('canvas');
   ctx = canvas.getContext('2d');
   canvas.width = puzzleWidth;
   canvas.height = puzzleHeight;
   canvas.style.border = "1px solid black";
-  roundRect(ctx, 0, 0, canvas.width, canvas.height, 5);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(img, 0, 0, img.width * scale, img.height * scale);
 
 }
 
-function roundRect(ctx, x, y, w, h, radius) {
-  var r = x + w;
-  var b = y + h;
-  ctx.beginPath();
-  ctx.fillStyle = "white";
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(r - radius, y);
-  ctx.quadraticCurveTo(r, y, r, y + radius);
-  ctx.lineTo(r, y + h - radius);
-  ctx.quadraticCurveTo(r, b, r - radius, b);
-  ctx.lineTo(x + radius, b);
-  ctx.quadraticCurveTo(x, b, x, b - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
-  ctx.fill();
-}
