@@ -2,7 +2,6 @@ var puzzleWidth;
 var puzzleHeight;
 var pieceWidth;
 var pieceHeight;
-var scale;
 var file;
 var canvas;
 var ctx;
@@ -55,24 +54,24 @@ $("#uploadedFile").change((e) => {
 
 
 function compress(file) {
-  const reader = new FileReader();
+  var reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = event => {
-    const img = new Image();
+    var img = new Image();
     img.src = event.target.result;
     img.onload = () => {
-      const elem = document.createElement('canvas');
+      var tempCanv = document.createElement('canvas');
 
-      const height = window.innerHeight * 0.8;
-      const scaleFactor = height / img.height;
+      var height = window.innerHeight * 0.8;
+      var scaleTemp = height / img.height;
 
-      elem.height = height;
-      elem.width = img.width * scaleFactor;
+      tempCanv.height = height;
+      tempCanv.width = img.width * scaleTemp;
 
-      const context = elem.getContext('2d');
-      context.drawImage(img, 0, 0, elem.width, elem.height);
+      var context = tempCanv.getContext('2d');
+      context.drawImage(img, 0, 0, tempCanv.width, tempCanv.height);
 
-      const data = context.canvas.toDataURL(img, 'image/jpeg', 1);
+      var data = context.canvas.toDataURL(img, 'image/jpeg', 1);
       var result = new Image();
       result.src = data;
 
@@ -94,7 +93,7 @@ $("#dificulty").on("click", ((e) => {
 
 function startGame(_img) {
   img = _img;
-  img.onload=onImage;
+  img.onload = onImage;
 }
 
 function onImage(e) {
@@ -104,7 +103,6 @@ function onImage(e) {
   canvas = document.getElementById('canvas');
   ctx = canvas.getContext('2d');
 
-  scale = Math.min(conta.clientWidth / img.width, conta.clientHeight / img.height);
   pieceWidth = Math.floor(img.width / difficulty);
   pieceHeight = Math.floor(img.height / difficulty);
   puzzleWidth = pieceWidth * difficulty;
@@ -141,10 +139,10 @@ function build() {
       calcY += pieceHeight;
     }
   }
-  $("#randomize").on("click", shufflePuzzle);
+  $("#randomize").on("click", shuffle);
 }
 
-function shufflePuzzle() {
+function shuffle() {
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
   for (let i = 0; i < pieces.length; i++) {
     var randomX = Math.floor(Math.random() * (puzzleWidth / 2));
@@ -223,7 +221,7 @@ function animate({ timing, draw, duration }) {
       requestAnimationFrame(animate);
     } else {
       checkAndReset();
-      $("#randomize").on("click", shufflePuzzle);
+      $("#randomize").on("click", shuffle);
     }
   });
 }
