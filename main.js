@@ -2,13 +2,20 @@ var puzzleWidth;
 var puzzleHeight;
 var pieceWidth;
 var pieceHeight;
+var difficulty = 2;
 var file;
 var canvas;
 var ctx;
+var canvasButtons;
+var ctxB;
+var canvasDif;
+var ctxD;
 var pieces;
 var clickedPiece;
 var img;
 var mouse;
+var mouseB;
+var mouseD;
 var t = null;
 
 $(document).ready(function () {
@@ -52,7 +59,6 @@ $("#uploadedFile").change((e) => {
   compress(file);
 });
 
-
 function compress(file) {
   var reader = new FileReader();
   reader.readAsDataURL(file);
@@ -81,16 +87,6 @@ function compress(file) {
   };
 }
 
-var difficulty = $("#dificulty").val();
-$("#dificulty").change((e) => {
-  difficulty = parseInt(e.target.value);
-  onImage();
-});
-$("#dificulty").on("click", ((e) => {
-  difficulty = parseInt(e.target.value);
-  onImage();
-}));
-
 function startGame(_img) {
   img = _img;
   img.onload = onImage;
@@ -99,20 +95,96 @@ function startGame(_img) {
 function onImage(e) {
   $("#conta").show();
   $("#uploadButton").hide();
-  var conta = document.getElementById('conta');
-  canvas = document.getElementById('canvas');
-  ctx = canvas.getContext('2d');
-
   pieceWidth = Math.floor(img.width / difficulty);
   pieceHeight = Math.floor(img.height / difficulty);
   puzzleWidth = pieceWidth * difficulty;
   puzzleHeight = pieceHeight * difficulty;
 
+  configCanvas();
+  initPuzzle();
+}
+
+function configCanvas() {
+  canvas = document.getElementById("canvas");
+  ctx = canvas.getContext("2d");
+
   canvas.width = puzzleWidth;
   canvas.height = puzzleHeight;
   canvas.style.border = "1px solid white";
 
-  initPuzzle();
+  canvasButtons = document.getElementById("canvasButtons");
+  ctxB = canvasButtons.getContext("2d");
+  canvasButtons.width = puzzleWidth;
+  canvasButtons.height = 30;
+
+  ctxB.fillStyle = "white";
+  ctxB.fillRect(0, 0, canvasButtons.width, canvasButtons.height);
+  ctxB.strokeStyle = "black";
+  ctxB.lineWidth = 2;
+  ctxB.beginPath();
+  ctxB.moveTo(canvasButtons.width / 2, 0);
+  ctxB.lineTo(canvasButtons.width / 2, canvasButtons.height);
+  ctxB.stroke();
+  ctxB.font = "20px Verdana";
+  ctxB.fillStyle = "black";
+  ctxB.fillText("Randomize", 0, canvasButtons.height / 2 + 7, canvasButtons.width / 2);
+  ctxB.fillText("Solve", canvasButtons.width / 2, canvasButtons.height / 2 + 7, canvasButtons.width / 2);
+
+  canvasDif = document.getElementById("canvasDif");
+  ctxD = canvasDif.getContext("2d");
+  canvasDif.width = puzzleWidth;
+  canvasDif.height = 10;
+  canvasDif.style.border = "1px solid black";
+
+  drawDif();
+  canvasDif.addEventListener("mousedown", difficultyEvent);
+}
+
+function difficultyEvent(e) {
+  mouseD = mouseUpdate(e, canvasDif);
+  difficulty = Math.round(mouseD.x / canvasDif.width * 4) + 2;
+  drawDif();
+  console.log(difficulty);
+  onImage();
+}
+
+function drawDif() {
+  var fill = (difficulty - 2) / 4 * canvasDif.width;
+  ctxD.fillStyle = "white";
+  ctxD.fillRect(0, 0, canvasDif.width, canvasDif.height);
+  ctxD.fillStyle = "cyan";
+  ctxD.fillRect(0, 0, fill, canvasDif.height);
+  ctxD.fillStyle = "black";
+  ctxD.fillText("Dificulty: " + difficulty, 0, canvasDif.height / 2 + 4, canvasDif.width);
+}
+
+function setSolveButton() {
+  canvasButtons.addEventListener("click", eventSolve);
+}
+
+function setShuffleButton() {
+  canvasButtons.addEventListener("click", eventShuffle);
+}
+
+function unSetSolveButton() {
+  canvasButtons.removeEventListener("click", eventSolve);
+}
+
+function unSetShuffleButton() {
+  canvasButtons.removeEventListener("click", eventShuffle);
+}
+
+function eventSolve(e) {
+  mouseB = mouseUpdate(e, canvasButtons);
+  if (mouseB.x > canvasButtons.width / 2) {
+    solve();
+  }
+}
+function eventShuffle(e) {
+  mouseB = mouseUpdate(e, canvasButtons);
+  if (mouseB.x < canvasButtons.width / 2) {
+    shuffle();
+  }
 }
 
 function initPuzzle() {
@@ -139,19 +211,19 @@ function build() {
       calcY += pieceHeight;
     }
   }
-  $("#randomize").on("click", shuffle);
+  setShuffleButton();
 }
 
 function shuffle() {
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
   for (let i = 0; i < pieces.length; i++) {
-    var randomX = Math.floor(Math.random() * (puzzleWidth / 2));
-    var randomY = Math.floor(Math.random() * (puzzleHeight / 2));
+    var randomX = Math.floor(Math.random() * (puzzleWidth - pieceWidth));
+    var randomY = Math.floor(Math.random() * (puzzleHeight - pieceHeight));
     pieces[i].curX = randomX;
     pieces[i].curY = randomY;
     ctx.drawImage(img, pieces[i].solX, pieces[i].solY, pieceWidth, pieceHeight, randomX, randomY, pieceWidth, pieceHeight);
   }
-  $("#solve").unbind("click").on("click", solve);
+  setSolveButton();
   document.onmousedown = onPuzzleClick;
 }
 
@@ -167,7 +239,7 @@ function getPiece() {
 }
 
 function onPuzzleClick(e) {
-  mouseUpdate(e);
+  mouse = mouseUpdate(e, canvas);
   clickedPiece = getPiece();
 
   if (clickedPiece != null) {
@@ -184,7 +256,7 @@ function onPuzzleClick(e) {
 }
 
 function updatePuzzle(e) {
-  mouseUpdate(e);
+  mouse = mouseUpdate(e, canvas);
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
   for (let i = 0; i < pieces.length; i++) {
     if (pieces[i] == clickedPiece) {
@@ -221,15 +293,15 @@ function animate({ timing, draw, duration }) {
       requestAnimationFrame(animate);
     } else {
       checkAndReset();
-      $("#randomize").on("click", shuffle);
+      setShuffleButton();
     }
   });
 }
 
 function solve() {
   disableClick();
-  $("#solve").unbind("click");
-  $("#randomize").unbind("click");
+  unSetSolveButton();
+  unSetShuffleButton();
   animate({
     duration: 1000,
     timing(timeFraction) {
