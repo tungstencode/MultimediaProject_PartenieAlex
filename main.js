@@ -88,8 +88,7 @@ var puzzleWidth;
 var puzzleHeight;
 var pieceWidth;
 var pieceHeight;
-var currentPiece;
-var currentDropPiece;
+var clickedPiece;
 
 var mouse;
 
@@ -114,18 +113,16 @@ function onImage(e) {
 function initPuzzle() {
   pieces = [];
   mouse = { x: 0, y: 0 };
-  currentPiece = null;
-  currentDropPiece = null;
+  clickedPiece = null;
   ctx.drawImage(img, 0, 0, puzzleWidth, puzzleHeight, 0, 0, puzzleWidth, puzzleHeight);
   build();
 }
 
 function build() {
-  var i;
   var piece;
   var curX = 0;
   var curY = 0;
-  for (i = 0; i < difficulty * difficulty; i++) {
+  for (let i = 0; i < difficulty * difficulty; i++) {
     piece = {};
     piece.index = i;
     piece.solX = curX;
@@ -143,21 +140,15 @@ function build() {
 function shufflePuzzle() {
   pieces = shuffleArray(pieces);
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
-  var i;
   var piece;
-  var curX = 0;
-  var curY = 0;
-  for (i = 0; i < pieces.length; i++) {
+
+  for (let i = 0; i < pieces.length; i++) {
+    var randomX = Math.floor(Math.random() * (puzzleWidth / 2));
+    var randomY = Math.floor(Math.random() * (puzzleHeight / 2));
     piece = pieces[i];
-    piece.curX = curX;
-    piece.curY = curY;
-    ctx.drawImage(img, piece.solX, piece.solY, pieceWidth, pieceHeight, curX, curY, pieceWidth, pieceHeight);
-    // ctx.strokeRect(curX, curY, pieceWidth, pieceHeight);
-    curX += pieceWidth;
-    if (curX >= puzzleWidth) {
-      curX = 0;
-      curY += pieceHeight;
-    }
+    piece.curX = randomX;
+    piece.curY = randomY;
+    ctx.drawImage(img, piece.solX, piece.solY, pieceWidth, pieceHeight, randomX, randomY, pieceWidth, pieceHeight);
   }
   $("#solve").unbind("click").on("click", solve);
   document.onmousedown = onPuzzleClick;
@@ -194,25 +185,9 @@ function mouseUpdate(e) {
   }
 }
 
-function onPuzzleClick(e) {
-  mouseUpdate(e);
-  currentPiece = checkPieceClicked();
-  if (currentPiece != null) {
-    new Audio('./media/hold.wav').play();
-    ctx.clearRect(currentPiece.curX, currentPiece.curY, pieceWidth, pieceHeight);
-    ctx.save();
-    ctx.globalAlpha = .9;
-    ctx.drawImage(img, currentPiece.solX, currentPiece.solY, pieceWidth, pieceHeight, mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
-    ctx.restore();
-    document.onmousemove = updatePuzzle;
-    document.onmouseup = pieceDropped;
-  }
-}
-
 function checkPieceClicked() {
-  var i;
   var piece;
-  for (i = 0; i < pieces.length; i++) {
+  for (let i = 0; i < pieces.length; i++) {
     piece = pieces[i];
     if (mouse.x < piece.curX || mouse.x > (piece.curX + pieceWidth) || mouse.y < piece.curY || mouse.y > (piece.curY + pieceHeight)) {
     }
@@ -223,57 +198,51 @@ function checkPieceClicked() {
   return null;
 }
 
+function onPuzzleClick(e) {
+  mouseUpdate(e);
+  clickedPiece = checkPieceClicked();
+  if (clickedPiece != null) {
+    new Audio('./media/hold.wav').play();
+    ctx.clearRect(clickedPiece.curX, clickedPiece.curY, pieceWidth, pieceHeight);
+    updatePuzzle(e);
+    ctx.save();
+    ctx.globalAlpha = .9;
+    ctx.drawImage(img, clickedPiece.solX, clickedPiece.solY, pieceWidth, pieceHeight, mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
+    ctx.restore();
+    document.onmousemove = updatePuzzle;
+    document.onmouseup = dropPiece;
+  }
+}
+
 function updatePuzzle(e) {
-  currentDropPiece = null;
   mouseUpdate(e);
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
   var i;
   var piece;
   for (i = 0; i < pieces.length; i++) {
     piece = pieces[i];
-    if (piece == currentPiece) {
+    if (piece == clickedPiece) {
       continue;
     }
     ctx.drawImage(img, piece.solX, piece.solY, pieceWidth, pieceHeight, piece.curX, piece.curY, pieceWidth, pieceHeight);
-    // ctx.strokeRect(piece.curX, piece.curY, pieceWidth, pieceHeight);
-    if (currentDropPiece == null) {
-      if (mouse.x < piece.curX || mouse.x > (piece.curX + pieceWidth) || mouse.y < piece.curY || mouse.y > (piece.curY + pieceHeight)) {
-      }
-      else {
-        currentDropPiece = piece;
-        ctx.save();
-        ctx.globalAlpha = .4;
-        ctx.fillStyle = hoverColor;
-        ctx.fillRect(currentDropPiece.curX, currentDropPiece.curY, pieceWidth, pieceHeight);
-        ctx.restore();
-      }
-    }
   }
   ctx.save();
-  ctx.globalAlpha = .6;
-  ctx.drawImage(img, currentPiece.solX, currentPiece.solY, pieceWidth, pieceHeight, mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
+  ctx.globalAlpha = .7;
+  ctx.drawImage(img, clickedPiece.solX, clickedPiece.solY, pieceWidth, pieceHeight, mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
   ctx.restore();
-  // ctx.strokeRect(mouse.x - (pieceWidth / 2), mouse.y - (pieceHeight / 2), pieceWidth, pieceHeight);
 }
 
-function pieceDropped() {
+function dropPiece(e) {
+  clickedPiece.curX = mouse.x - (pieceWidth / 2);
+  clickedPiece.curY = mouse.y - (pieceHeight / 2);
   document.onmousemove = null;
   document.onmouseup = null;
-  if (currentDropPiece != null) {
-    var tmp = { curX: currentPiece.curX, curY: currentPiece.curY };
-    currentPiece.curX = currentDropPiece.curX;
-    currentPiece.curY = currentDropPiece.curY;
-    currentDropPiece.curX = tmp.curX;
-    currentDropPiece.curY = tmp.curY;
-  }
   new Audio('./media/release.wav').play();
   checkAndReset();
 }
 
 function animate({ timing, draw, duration }) {
-
   let start = performance.now();
-
   requestAnimationFrame(function animate(time) {
     let timeFraction = (time - start) / duration;
     if (timeFraction > 1) timeFraction = 1;
@@ -313,22 +282,25 @@ function solve() {
         piece.curX = piece.curX + (piece.solX - piece.curX) * progress;
         piece.curY = piece.curY + (piece.solY - piece.curY) * progress;
         ctx.drawImage(img, piece.solX, piece.solY, pieceWidth, pieceHeight, piece.curX, piece.curY, pieceWidth, pieceHeight);
-        // ctx.strokeRect(piece.curX, piece.curY, pieceWidth, pieceHeight);
       }
     }
   });
 }
 
+function between(x, min, max) {
+  return x >= min && x <= max;
+}
+
 function checkAndReset() {
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
+  var error = Math.min(puzzleWidth / 20, puzzleHeight / 20);
   var win = true;
-  var i;
   var piece;
-  for (i = 0; i < pieces.length; i++) {
+  for (let i = 0; i < pieces.length; i++) {
     piece = pieces[i];
     ctx.drawImage(img, piece.solX, piece.solY, pieceWidth, pieceHeight, piece.curX, piece.curY, pieceWidth, pieceHeight);
-    // ctx.strokeRect(piece.curX, piece.curY, pieceWidth, pieceHeight);
-    if (piece.curX != piece.solX || piece.curY != piece.solY) {
+    if (!between(piece.curX, piece.solX - error, piece.solX + error) ||
+      !between(piece.curY, piece.solY - error, piece.solY + error)) {
       win = false;
     }
   }
@@ -338,13 +310,14 @@ function checkAndReset() {
 }
 
 function gameOver() {
-  new Audio('./media/done.flac').play();
+  var done = new Audio('./media/done.wav');
+  done.volume = 0.5;
+  done.play();
   document.onmousedown = null;
   document.onmousemove = null;
   document.onmouseup = null;
   initPuzzle();
 }
-
 
 function setCanvas() {
   canvas = document.getElementById('canvas');
@@ -352,8 +325,8 @@ function setCanvas() {
   canvas.width = puzzleWidth;
   canvas.height = puzzleHeight;
   canvas.style.border = "1px solid black";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(img, 0, 0, img.width * scale, img.height * scale);
+  // ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // ctx.drawImage(img, 0, 0, img.width * scale, img.height * scale);
 
 }
 
