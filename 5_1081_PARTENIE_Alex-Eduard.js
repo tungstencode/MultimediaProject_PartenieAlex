@@ -18,7 +18,7 @@ var img;
 var mouse;
 var mouseB;
 var mouseD;
-var t = null;
+var timeOut = null;
 
 $(document).ready(function() {
   $("#conta").hide();
@@ -46,8 +46,8 @@ window.addEventListener(
 
 window.onresize = () => {
   if (canvas) {
-    if (t != null) clearTimeout(t);
-    t = setTimeout(function() {
+    if (timeOut != null) clearTimeout(timeOut);
+    timeOut = setTimeout(function() {
       compress(file);
     }, 20);
   }
@@ -230,15 +230,15 @@ function initPuzzle() {
 }
 
 function build() {
-  var calcX = 0;
-  var calcY = 0;
+  var x = 0;
+  var y = 0;
   for (let i = 0; i < difficulty * difficulty; i++) {
-    var piece = { key: i, solX: calcX, solY: calcY, curX: 0, curY: 0 };
+    var piece = { key: i, solX: x, solY: y, curX: 0, curY: 0 };
     pieces.push(piece);
-    calcX += pieceWidth;
-    if (calcX >= puzzleWidth) {
-      calcX = 0;
-      calcY += pieceHeight;
+    x += pieceWidth;
+    if (x >= puzzleWidth) {
+      x = 0;
+      y += pieceHeight;
     }
   }
   setShuffleButton();
