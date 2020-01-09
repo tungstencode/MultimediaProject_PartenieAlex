@@ -284,20 +284,19 @@ function getPiece() {
 function onPuzzleClick(e) {
   mouse = mouseUpdate(e, canvas);
   clickedPiece = getPiece();
-
   if (clickedPiece != null) {
     pieces.splice(pieces.indexOf(clickedPiece), 1);
     pieces.push(clickedPiece);
     pieceOffsetX = mouse.x - clickedPiece.curX;
     pieceOffsetY = mouse.y - clickedPiece.curY;
     new Audio("./media/hold.wav").play();
-    updatePuzzle(e);
-    document.onmousemove = updatePuzzle;
+    drawPuzzle(e);
+    document.onmousemove = drawPuzzle;
     document.onmouseup = dropPiece;
   }
 }
 
-function updatePuzzle(e) {
+function drawPuzzle(e) {
   mouse = mouseUpdate(e, canvas);
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
   for (let i = 0; i < pieces.length; i++) {

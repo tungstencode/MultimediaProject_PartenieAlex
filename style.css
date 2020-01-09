@@ -51,6 +51,10 @@ body {
   color: #fff;
 }
 
+#hero img {
+  width: 100px;
+}
+
 #hero h2 {
   color: #eee;
   margin-bottom: 50px;
