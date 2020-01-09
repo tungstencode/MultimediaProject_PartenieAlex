@@ -24,27 +24,25 @@ $(document).ready(function() {
   $("#conta").hide();
 });
 
-function disableClick() {
-  document.onmousedown = null;
-  document.onmousemove = null;
-  document.onmouseup = null;
-}
+window.addEventListener(
+  "dragover",
+  (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+  },
+  false,
+);
 
-function handleFileSelect(evt) {
-  evt.stopPropagation();
-  evt.preventDefault();
-  file = evt.dataTransfer.files[0];
-  compress(file);
-}
-
-function handleDragOver(evt) {
-  evt.stopPropagation();
-  evt.preventDefault();
-  evt.dataTransfer.dropEffect = "copy";
-}
-
-window.addEventListener("dragover", handleDragOver, false);
-window.addEventListener("drop", handleFileSelect, false);
+window.addEventListener(
+  "drop",
+  (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    file = e.dataTransfer.files[0];
+    compress(file);
+  },
+  false,
+);
 
 window.onresize = () => {
   if (canvas) {
@@ -55,10 +53,58 @@ window.onresize = () => {
   }
 };
 
+function difficultyEvent(e) {
+  mouseD = mouseUpdate(e, canvasDif);
+  difficulty = Math.round((mouseD.x / canvasDif.width) * 4) + 2;
+  drawDif();
+  onImage();
+}
+
+function eventSolve(e) {
+  mouseB = mouseUpdate(e, canvasButtons);
+  if (mouseB.x > canvasButtons.width / 2) {
+    solve();
+  }
+}
+
+function eventShuffle(e) {
+  mouseB = mouseUpdate(e, canvasButtons);
+  if (mouseB.x < canvasButtons.width / 2) {
+    shuffle();
+  }
+}
+
+function disableClick() {
+  document.onmousedown = null;
+  document.onmousemove = null;
+  document.onmouseup = null;
+}
+
+function setSolveButton() {
+  canvasButtons.addEventListener("click", eventSolve);
+}
+
+function setShuffleButton() {
+  canvasButtons.addEventListener("click", eventShuffle);
+}
+
+function unsetSolveButton() {
+  canvasButtons.removeEventListener("click", eventSolve);
+}
+
+function unsetShuffleButton() {
+  canvasButtons.removeEventListener("click", eventShuffle);
+}
+
 $("#uploadedFile").change((e) => {
   file = e.target.files[0];
   compress(file);
 });
+
+function setImg(_img) {
+  img = _img;
+  img.onload = onImage;
+}
 
 function compress(file) {
   var reader = new FileReader();
@@ -82,15 +128,10 @@ function compress(file) {
       var result = new Image();
       result.src = data;
 
-      startGame(result);
+      setImg(result);
     }),
       (reader.onerror = (error) => console.log(error));
   };
-}
-
-function startGame(_img) {
-  img = _img;
-  img.onload = onImage;
 }
 
 function onImage(e) {
@@ -114,6 +155,7 @@ function configCanvas() {
 
   canvasButtons = document.getElementById("canvasButtons");
   ctxB = canvasButtons.getContext("2d");
+
   canvasButtons.width = puzzleWidth;
   canvasButtons.height = 30;
 
@@ -158,13 +200,6 @@ function unsetDificultyBar() {
   canvasDif.removeEventListener("mousedown", difficultyEvent);
 }
 
-function difficultyEvent(e) {
-  mouseD = mouseUpdate(e, canvasDif);
-  difficulty = Math.round((mouseD.x / canvasDif.width) * 4) + 2;
-  drawDif();
-  onImage();
-}
-
 function drawDif() {
   var fill = ((difficulty - 2) / 4) * canvasDif.width;
   ctxD.fillStyle = "white";
@@ -180,36 +215,6 @@ function drawDif() {
   );
 }
 
-function setSolveButton() {
-  canvasButtons.addEventListener("click", eventSolve);
-}
-
-function setShuffleButton() {
-  canvasButtons.addEventListener("click", eventShuffle);
-}
-
-function unsetSolveButton() {
-  canvasButtons.removeEventListener("click", eventSolve);
-}
-
-function unsetShuffleButton() {
-  canvasButtons.removeEventListener("click", eventShuffle);
-}
-
-function eventSolve(e) {
-  mouseB = mouseUpdate(e, canvasButtons);
-  if (mouseB.x > canvasButtons.width / 2) {
-    solve();
-  }
-}
-
-function eventShuffle(e) {
-  mouseB = mouseUpdate(e, canvasButtons);
-  if (mouseB.x < canvasButtons.width / 2) {
-    shuffle();
-  }
-}
-
 function initPuzzle() {
   unsetShuffleButton();
   unsetSolveButton();
@@ -220,17 +225,7 @@ function initPuzzle() {
     y: 0,
   };
   clickedPiece = null;
-  ctx.drawImage(
-    img,
-    0,
-    0,
-    puzzleWidth,
-    puzzleHeight,
-    0,
-    0,
-    puzzleWidth,
-    puzzleHeight,
-  );
+  ctx.drawImage(img, 0, 0, puzzleWidth, puzzleHeight);
   build();
 }
 
@@ -401,7 +396,7 @@ function between(x, min, max) {
 
 function checkAndReset() {
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
-  var error = Math.min(puzzleWidth / 20, puzzleHeight / 20);
+  var error = Math.min(puzzleWidth / 20, puzzleHeight / 20) + 3;
   var win = true;
   for (let i = 0; i < pieces.length; i++) {
     ctx.drawImage(
@@ -427,13 +422,11 @@ function checkAndReset() {
     }
   }
   if (win) {
-    setTimeout(gameOver, 500);
+    setTimeout(() => {
+      var done = new Audio("./media/done.wav");
+      done.volume = 0.5;
+      done.play();
+      initPuzzle();
+    }, 500);
   }
-}
-
-function gameOver() {
-  var done = new Audio("./media/done.wav");
-  done.volume = 0.5;
-  done.play();
-  initPuzzle();
 }
