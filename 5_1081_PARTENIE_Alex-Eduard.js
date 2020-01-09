@@ -137,15 +137,12 @@ function compress(file) {
 function onImage(e) {
   $("#conta").show();
   $("#uploadButton").hide();
-  pieceWidth = Math.floor(img.width / difficulty);
-  pieceHeight = Math.floor(img.height / difficulty);
-  puzzleWidth = pieceWidth * difficulty;
-  puzzleHeight = pieceHeight * difficulty;
   configCanvas();
-  initPuzzle();
+  configPuzzle();
 }
 
 function configCanvas() {
+  calculateDimensions();
   canvas = document.getElementById("canvas");
   ctx = canvas.getContext("2d");
 
@@ -215,7 +212,7 @@ function drawDif() {
   );
 }
 
-function initPuzzle() {
+function configPuzzle() {
   unsetShuffleButton();
   unsetSolveButton();
   disableClick();
@@ -426,7 +423,7 @@ function checkAndReset() {
       var done = new Audio("./media/done.wav");
       done.volume = 0.5;
       done.play();
-      initPuzzle();
+      configPuzzle();
     }, 500);
   }
 }
