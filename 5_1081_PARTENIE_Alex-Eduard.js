@@ -18,7 +18,8 @@ var puzzleWidth,
   mouse,
   mouseB,
   mouseD,
-  timeOut = null;
+  timeOut = null,
+  averageRBG = "cyan";
 
 $(document).ready(function() {
   $("#conta").hide();
@@ -132,7 +133,15 @@ function compress(file) {
       let context = tempCanv.getContext("2d");
       context.drawImage(img, 0, 0, tempCanv.width, tempCanv.height);
 
+      try {
+        averageRBG = getAverageColor(tempCanv, context);
+      } catch (err) {
+        console.warn(err);
+        averageRBG = "cyan";
+      }
+
       let data = context.canvas.toDataURL(img, "image/jpeg", 1);
+
       let result = new Image();
       result.src = data;
 
@@ -190,7 +199,7 @@ function configCanvas() {
   canvasDif = document.getElementById("canvasDif");
   ctxD = canvasDif.getContext("2d");
   canvasDif.width = puzzleWidth;
-  canvasDif.height = 10;
+  canvasDif.height = 15;
   canvasDif.style.border = "1px solid black";
 
   drawDif();
@@ -201,7 +210,7 @@ function drawDif() {
   const fill = ((difficulty - 2) / 4) * canvasDif.width;
   ctxD.fillStyle = "white";
   ctxD.fillRect(0, 0, canvasDif.width, canvasDif.height);
-  ctxD.fillStyle = "cyan";
+  ctxD.fillStyle = averageRBG;
   ctxD.fillRect(0, 0, fill, canvasDif.height);
   ctxD.fillStyle = "black";
   ctxD.fillText(
