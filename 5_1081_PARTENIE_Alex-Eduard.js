@@ -1,24 +1,24 @@
-var puzzleWidth;
-var puzzleHeight;
-var pieceWidth;
-var pieceHeight;
-var difficulty = 2;
-var file;
-var canvas;
-var ctx;
-var canvasButtons;
-var ctxB;
-var canvasDif;
-var ctxD;
-var pieces;
-var clickedPiece;
-var pieceOffsetX = 0;
-var pieceOffsetY = 0;
-var img;
-var mouse;
-var mouseB;
-var mouseD;
-var timeOut = null;
+var puzzleWidth,
+  puzzleHeight,
+  pieceWidth,
+  pieceHeight,
+  difficulty = 2,
+  file,
+  canvas,
+  ctx,
+  canvasButtons,
+  ctxB,
+  canvasDif,
+  ctxD,
+  pieces,
+  clickedPiece,
+  pieceOffsetX = 0,
+  pieceOffsetY = 0,
+  img,
+  mouse,
+  mouseB,
+  mouseD,
+  timeOut = null;
 
 $(document).ready(function() {
   $("#conta").hide();
@@ -96,6 +96,14 @@ function unsetShuffleButton() {
   canvasButtons.removeEventListener("click", eventShuffle);
 }
 
+function setDificultyBar() {
+  canvasDif.addEventListener("mousedown", difficultyEvent);
+}
+
+function unsetDificultyBar() {
+  canvasDif.removeEventListener("mousedown", difficultyEvent);
+}
+
 $("#uploadedFile").change((e) => {
   file = e.target.files[0];
   compress(file);
@@ -107,25 +115,25 @@ function setImg(_img) {
 }
 
 function compress(file) {
-  var reader = new FileReader();
+  let reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = (event) => {
-    var img = new Image();
+    let img = new Image();
     img.src = event.target.result;
     (img.onload = () => {
-      var tempCanv = document.createElement("canvas");
+      let tempCanv = document.createElement("canvas");
 
-      var height = window.innerHeight * 0.8;
-      var scaleTemp = height / img.height;
+      let height = window.innerHeight * 0.8;
+      let scaleTemp = height / img.height;
 
       tempCanv.height = height;
       tempCanv.width = img.width * scaleTemp;
 
-      var context = tempCanv.getContext("2d");
+      let context = tempCanv.getContext("2d");
       context.drawImage(img, 0, 0, tempCanv.width, tempCanv.height);
 
-      var data = context.canvas.toDataURL(img, "image/jpeg", 1);
-      var result = new Image();
+      let data = context.canvas.toDataURL(img, "image/jpeg", 1);
+      let result = new Image();
       result.src = data;
 
       setImg(result);
@@ -189,16 +197,8 @@ function configCanvas() {
   setDificultyBar();
 }
 
-function setDificultyBar() {
-  canvasDif.addEventListener("mousedown", difficultyEvent);
-}
-
-function unsetDificultyBar() {
-  canvasDif.removeEventListener("mousedown", difficultyEvent);
-}
-
 function drawDif() {
-  var fill = ((difficulty - 2) / 4) * canvasDif.width;
+  const fill = ((difficulty - 2) / 4) * canvasDif.width;
   ctxD.fillStyle = "white";
   ctxD.fillRect(0, 0, canvasDif.width, canvasDif.height);
   ctxD.fillStyle = "cyan";
@@ -227,10 +227,10 @@ function configPuzzle() {
 }
 
 function build() {
-  var x = 0;
-  var y = 0;
+  let x = 0;
+  let y = 0;
   for (let i = 0; i < difficulty * difficulty; i++) {
-    var piece = { key: i, solX: x, solY: y, curX: 0, curY: 0 };
+    let piece = { key: i, solX: x, solY: y, curX: 0, curY: 0 };
     pieces.push(piece);
     x += pieceWidth;
     if (x >= puzzleWidth) {
@@ -244,8 +244,8 @@ function build() {
 function shuffle() {
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
   for (let i = 0; i < pieces.length; i++) {
-    var randomX = Math.floor(Math.random() * (puzzleWidth - pieceWidth));
-    var randomY = Math.floor(Math.random() * (puzzleHeight - pieceHeight));
+    let randomX = Math.floor(Math.random() * (puzzleWidth - pieceWidth));
+    let randomY = Math.floor(Math.random() * (puzzleHeight - pieceHeight));
     pieces[i].curX = randomX;
     pieces[i].curY = randomY;
     ctx.drawImage(
@@ -393,8 +393,8 @@ function between(x, min, max) {
 
 function checkAndReset() {
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
-  var error = Math.min(puzzleWidth / 20, puzzleHeight / 20) + 3;
-  var win = true;
+  let error = Math.min(puzzleWidth / 20, puzzleHeight / 20) + 3;
+  let win = true;
   for (let i = 0; i < pieces.length; i++) {
     ctx.drawImage(
       img,
@@ -420,7 +420,7 @@ function checkAndReset() {
   }
   if (win) {
     setTimeout(() => {
-      var done = new Audio("./media/done.wav");
+      let done = new Audio("./media/done.wav");
       done.volume = 0.5;
       done.play();
       configPuzzle();
