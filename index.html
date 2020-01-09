@@ -1,50 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>ProiectMultimediaTema5Puzzle</title>
+    <link href="./lib/bootstrap.css" rel="stylesheet" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>ProiectMultimediaTema5Puzzle</title>
-  <link href="./lib/bootstrap.css" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css">
-</head>
+  <body>
+    <section id="hero">
+      <div class="hero-container">
+        <label id="uploadButton">
+          <input id="uploadedFile" type="file" />
+          <h1><img width="100px" src="./media/arrowup.svg" alt="" /></h1>
+        </label>
 
-<body>
-  <section id="hero">
-    <div class="hero-container">
-      <label id="uploadButton">
-        <input id="uploadedFile" type="file" />
-        <h1> <img width="100px" src="./media/arrowup.svg" alt=""></h1>
-      </label>
-
-      <div id="conta" class="container">
-        <div class="row justify-content-center">
-          <canvas id="canvas"></canvas>
-        </div>
-        <div class="row justify-content-center">
-          <canvas id="canvasButtons"></canvas>
-        </div>
-        <div class="row justify-content-center">
-          <canvas id="canvasDif"></canvas>
+        <div id="conta" class="container">
+          <div class="row justify-content-center">
+            <canvas id="canvas"></canvas>
+          </div>
+          <div class="row justify-content-center">
+            <canvas id="canvasButtons"></canvas>
+          </div>
+          <div class="row justify-content-center">
+            <canvas id="canvasDif"></canvas>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <footer id="footer">
-    <div class="container">
-      <div class="copyright">
-        <strong>Partenie Alex-Eduard</strong>
+    <footer id="footer">
+      <div class="container">
+        <div class="copyright">
+          <strong>Partenie Alex-Eduard</strong>
+        </div>
       </div>
-    </div>
-  </footer>
+    </footer>
 
-  <script type="text/javascript" src="./lib/jquery.js"></script>
-  <script type="text/javascript" src="./lib/bootstrap.js"></script>
-  <script type="text/javascript" src="./main.js"></script>
-  <script type="text/javascript" src="./lib/functions.js"></script>
-
-</body>
-
+    <script type="text/javascript" src="./lib/jquery.js"></script>
+    <script type="text/javascript" src="./lib/bootstrap.js"></script>
+    <script type="text/javascript" src="./lib/functions.js"></script>
+    <script type="text/javascript" src="./main.js"></script>
+  </body>
 </html>
