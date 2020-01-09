@@ -34,7 +34,6 @@ function handleFileSelect(evt) {
   evt.stopPropagation();
   evt.preventDefault();
   file = evt.dataTransfer.files[0];
-  console.log(file);
   compress(file);
 }
 
@@ -101,7 +100,6 @@ function onImage(e) {
   pieceHeight = Math.floor(img.height / difficulty);
   puzzleWidth = pieceWidth * difficulty;
   puzzleHeight = pieceHeight * difficulty;
-
   configCanvas();
   initPuzzle();
 }
@@ -149,14 +147,21 @@ function configCanvas() {
   canvasDif.style.border = "1px solid black";
 
   drawDif();
+  setDificultyBar();
+}
+
+function setDificultyBar() {
   canvasDif.addEventListener("mousedown", difficultyEvent);
+}
+
+function unsetDificultyBar() {
+  canvasDif.removeEventListener("mousedown", difficultyEvent);
 }
 
 function difficultyEvent(e) {
   mouseD = mouseUpdate(e, canvasDif);
   difficulty = Math.round((mouseD.x / canvasDif.width) * 4) + 2;
   drawDif();
-  console.log(difficulty);
   onImage();
 }
 
@@ -183,11 +188,11 @@ function setShuffleButton() {
   canvasButtons.addEventListener("click", eventShuffle);
 }
 
-function unSetSolveButton() {
+function unsetSolveButton() {
   canvasButtons.removeEventListener("click", eventSolve);
 }
 
-function unSetShuffleButton() {
+function unsetShuffleButton() {
   canvasButtons.removeEventListener("click", eventShuffle);
 }
 
@@ -206,6 +211,8 @@ function eventShuffle(e) {
 }
 
 function initPuzzle() {
+  unsetShuffleButton();
+  unsetSolveButton();
   disableClick();
   pieces = [];
   mouse = {
@@ -344,24 +351,23 @@ function animate({ timing, draw, duration }) {
   requestAnimationFrame(function animate(time) {
     let timeFraction = (time - start) / duration;
     if (timeFraction > 1) timeFraction = 1;
-
     let progress = timing(timeFraction);
-
     draw(progress);
-
     if (timeFraction < 1) {
       requestAnimationFrame(animate);
     } else {
       checkAndReset();
       setShuffleButton();
+      setDificultyBar();
     }
   });
 }
 
 function solve() {
   disableClick();
-  unSetSolveButton();
-  unSetShuffleButton();
+  unsetSolveButton();
+  unsetShuffleButton();
+  unsetDificultyBar();
   animate({
     duration: 1000,
     timing(timeFraction) {
