@@ -19,7 +19,10 @@ var puzzleWidth,
   mouseB,
   mouseD,
   timeOut = null,
-  averageRBG = "cyan";
+  averageRBG = "cyan",
+  shuffleAudio = new Audio("./media/shuffle.wav"),
+  solveAudio = new Audio("./media/solve.wav"),
+  difficultyAudio = new Audio("./media/difficulty.wav");
 
 $(document).ready(function() {
   $("#conta").hide();
@@ -40,23 +43,27 @@ window.addEventListener(
     e.stopPropagation();
     e.preventDefault();
     file = e.dataTransfer.files[0];
-    compress(file);
+    resize(file);
   },
   false,
 );
-
+// Cand se face resize se apeleaza
+// functia de redimensionare a imaginii
 window.onresize = () => {
   if (canvas) {
     if (timeOut != null) clearTimeout(timeOut);
     timeOut = setTimeout(function() {
-      compress(file);
+      resize(file);
     }, 20);
   }
 };
-
+// Evenimente pentru a usura activarea/dezactivarea butoanelor
 function difficultyEvent(e) {
   mouseD = mouseUpdate(e, canvasDif);
   difficulty = Math.round((mouseD.x / canvasDif.width) * 4) + 2;
+  difficultyAudio.volume = difficulty / 6;
+  console.log(difficultyAudio.volume)
+  difficultyAudio.play();
   drawDif();
   onImage();
 }
@@ -80,7 +87,8 @@ function disableClick() {
   document.onmousemove = null;
   document.onmouseup = null;
 }
-
+// Functii ajutatoare pentru intelegere usoara
+// Enable/disable pentru actiunile utilizatorului
 function setSolveButton() {
   canvasButtons.addEventListener("click", eventSolve);
 }
@@ -104,63 +112,70 @@ function setDificultyBar() {
 function unsetDificultyBar() {
   canvasDif.removeEventListener("mousedown", difficultyEvent);
 }
-
+// Cand inputul primeste un fisier il redimensioneaza
 $("#uploadedFile").change((e) => {
   file = e.target.files[0];
-  compress(file);
+  resize(file);
 });
-
+// Primeste imaginea procesata din resize
+// Cand se incarca se apeleaza evenimentul
+// care configureaza canvasul si puzzle-ul
 function setImg(_img) {
   img = _img;
   img.onload = onImage;
 }
-
-function compress(file) {
+// Primeste un obiect de tip File si este
+// redimensionat cu ajutorul unui canvas temporar
+function resize(file) {
   let reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onload = (event) => {
     let img = new Image();
     img.src = event.target.result;
-    (img.onload = () => {
+    img.onload = () => {
       let tempCanv = document.createElement("canvas");
-
+      // Dimensiunile sunt la fel ca in css pentru conta
       let height = window.innerHeight * 0.8;
-      let scaleTemp = height / img.height;
-
-      tempCanv.height = height;
+      let width = window.innerWidth * 0.65;
+      let scaleTemp = Math.min(height / img.height, width / img.width);
+      // Se redimensioneaza in functie de container
+      tempCanv.height = img.height * scaleTemp;
       tempCanv.width = img.width * scaleTemp;
 
       let context = tempCanv.getContext("2d");
       context.drawImage(img, 0, 0, tempCanv.width, tempCanv.height);
-
+      // Seteaza background-ul cu media de culoare din imagine
       try {
         let rgb = getAverageColor(tempCanv, context);
-        averageRBG = rgbToHex(rgb.r, rgb.g, rgb.b);
+        averageRBG = rgbToHex(rgb);
         document.getElementsByTagName("body")[0].style.background = averageRBG;
       } catch (err) {
         console.warn(err);
         averageRBG = "cyan";
       }
-
+      // Luam informatia la calitate 100% sub format jpeg
       let data = context.canvas.toDataURL(img, "image/jpeg", 1);
-
       let result = new Image();
       result.src = data;
-
+      // Trimitem imaginea modificata
       setImg(result);
-    }),
-      (reader.onerror = (error) => console.log(error));
+    };
   };
 }
-
+// Eveniment pentru cand imaginea este incarcata
 function onImage(e) {
   $("#conta").show();
   $("#uploadButton").hide();
+  shuffleAudio.volume = 0;
+  shuffleAudio.play();
+  shuffleAudio.volume = 0.8;
   configCanvas();
   configPuzzle();
 }
-
+// Seteaza dimensiunile si deseneaza butoanele si bara de dificultate
 function configCanvas() {
+  // Calcularea dimensiunilor se face dupa dificultate
+  // A fost luata de la un articol
   calculateDimensions();
   canvas = document.getElementById("canvas");
   ctx = canvas.getContext("2d");
@@ -177,6 +192,7 @@ function configCanvas() {
 
   ctxB.fillStyle = "white";
   ctxB.fillRect(0, 0, canvasButtons.width, canvasButtons.height);
+  //Linie despartitoare
   ctxB.strokeStyle = "black";
   ctxB.lineWidth = 2;
   ctxB.beginPath();
@@ -203,8 +219,9 @@ function configCanvas() {
   canvasDif.width = puzzleWidth;
   canvasDif.height = 15;
   canvasDif.style.border = "1px solid black";
-
+  // Deseneaza bara de dificultate default(2)
   drawDif();
+  // Lasa utilizatorul sa seteze dificultatea
   setDificultyBar();
 }
 
@@ -224,6 +241,8 @@ function drawDif() {
 }
 
 function configPuzzle() {
+  // Oprim toate butoanele si abiliatatea de a da click pe puzzle
+  // In caz contrar se poate apuca o piesa dupa ce a fost rezovlat
   unsetShuffleButton();
   unsetSolveButton();
   disableClick();
@@ -236,7 +255,7 @@ function configPuzzle() {
   ctx.drawImage(img, 0, 0, puzzleWidth, puzzleHeight);
   build();
 }
-
+// Contruirea vectorului de piese si salvarea pozitiilor corecte
 function build() {
   let x = 0;
   let y = 0;
@@ -244,15 +263,19 @@ function build() {
     let piece = { key: i, solX: x, solY: y, curX: 0, curY: 0 };
     pieces.push(piece);
     x += pieceWidth;
+    // Cand se termina un rand trecem la urmatorul
     if (x >= puzzleWidth) {
       x = 0;
       y += pieceHeight;
     }
   }
+  // Activam butonul de amestecare a pieselor
   setShuffleButton();
 }
-
+// Fiecare piesa primeste o coordonata intre 0 si puzzleWidth, puzzleHeight
+// Avand grija sa fie in canvas
 function shuffle() {
+  shuffleAudio.play();
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
   for (let i = 0; i < pieces.length; i++) {
     let randomX = Math.floor(Math.random() * (puzzleWidth - pieceWidth));
@@ -271,10 +294,12 @@ function shuffle() {
       pieceHeight,
     );
   }
+  // Activam butonul pentru a putea rezolva puzzle-ul automat
   setSolveButton();
   document.onmousedown = onPuzzleClick;
 }
-
+// Merge de la sfarsit la inceput pentru a apuca
+// doar piesa care in fata celorlalte
 function getPiece() {
   for (let i = pieces.length - 1; i >= 0; i--) {
     if (
@@ -290,7 +315,8 @@ function getPiece() {
   }
   return null;
 }
-
+// Cand se da clic pe canvas se updateaza mouse-ul
+// Si se verifica daca am "prins" o piesa cand am dat click
 function onPuzzleClick(e) {
   mouse = mouseUpdate(e, canvas);
   clickedPiece = getPiece();
@@ -301,11 +327,12 @@ function onPuzzleClick(e) {
     pieceOffsetY = mouse.y - clickedPiece.curY;
     new Audio("./media/hold.wav").play();
     drawPuzzle(e);
+    // Se redesenaza canvasul la fiecare miscare de mouse
     document.onmousemove = drawPuzzle;
     document.onmouseup = dropPiece;
   }
 }
-
+// Deseneaza celelalte piese apoi deseneaza piesa apucata cu transparenta 70%
 function drawPuzzle(e) {
   mouse = mouseUpdate(e, canvas);
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
@@ -339,16 +366,21 @@ function drawPuzzle(e) {
   );
   ctx.restore();
 }
-
+// Cand se da drumul la click piesa ia valorile mouse-ului
+// cu offsetul fata de piesa din momentul apucarii
 function dropPiece() {
   clickedPiece.curX = mouse.x - pieceOffsetX;
   clickedPiece.curY = mouse.y - pieceOffsetY;
   document.onmousemove = null;
   document.onmouseup = null;
   new Audio("./media/release.wav").play();
+  // Se verifica daca e complet
   checkAndReset();
 }
-
+// Deseneaza cu progress fiecare piesa
+// Progres este un procent din timpul total
+// Iar la sfarsit se verifica iar si se reactiveaza
+// butonul de amestecare si bara de dificultate(oprite cand se da click pe solve)
 function animate({ timing, draw, duration }) {
   let start = performance.now();
   requestAnimationFrame(function animate(time) {
@@ -365,8 +397,12 @@ function animate({ timing, draw, duration }) {
     }
   });
 }
-
+// Oprim toate functiile accesibile utilizatorului
+// Se incepe animatia iar in functia draw trecem prin fiecare
+// piesa si ne apropiem de solX respectiv solY
+// Timing(..) este folosita pentru a pastra progresul de la un frame la altul
 function solve() {
+  solveAudio.play();
   disableClick();
   unsetSolveButton();
   unsetShuffleButton();
@@ -380,6 +416,7 @@ function solve() {
       ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
       for (i = 0; i < pieces.length; i++) {
         piece = pieces[i];
+        // Crestem diferenta intre coordonatele actuale si cele finale pana se ajunge la rezultat
         piece.curX = piece.curX + (piece.solX - piece.curX) * progress;
         piece.curY = piece.curY + (piece.solY - piece.curY) * progress;
         ctx.drawImage(
@@ -401,7 +438,8 @@ function solve() {
 function between(x, min, max) {
   return x >= min && x <= max;
 }
-
+// Veriifca daca coordonatele sunt corecte, cu o marja
+// de eroare relativa la marimea canvasului
 function checkAndReset() {
   ctx.clearRect(0, 0, puzzleWidth, puzzleHeight);
   let error = Math.min(puzzleWidth / 20, puzzleHeight / 20) + 3;
