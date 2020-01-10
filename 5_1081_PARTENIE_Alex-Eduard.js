@@ -62,7 +62,6 @@ function difficultyEvent(e) {
   mouseD = mouseUpdate(e, canvasDif);
   difficulty = Math.round((mouseD.x / canvasDif.width) * 4) + 2;
   difficultyAudio.volume = difficulty / 6;
-  console.log(difficultyAudio.volume)
   difficultyAudio.play();
   drawDif();
   onImage();
