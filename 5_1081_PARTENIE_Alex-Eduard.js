@@ -276,7 +276,7 @@ function shuffle() {
 }
 
 function getPiece() {
-  for (let i = 0; i < pieces.length; i++) {
+  for (let i = pieces.length - 1; i >= 0; i--) {
     if (
       !(
         mouse.x < pieces[i].curX ||
