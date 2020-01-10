@@ -134,7 +134,9 @@ function compress(file) {
       context.drawImage(img, 0, 0, tempCanv.width, tempCanv.height);
 
       try {
-        averageRBG = getAverageColor(tempCanv, context);
+        let rgb = getAverageColor(tempCanv, context);
+        averageRBG = rgbToHex(rgb.r, rgb.g, rgb.b);
+        document.getElementsByTagName("body")[0].style.background = averageRBG;
       } catch (err) {
         console.warn(err);
         averageRBG = "cyan";
